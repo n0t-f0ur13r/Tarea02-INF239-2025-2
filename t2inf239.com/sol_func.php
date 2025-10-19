@@ -12,7 +12,7 @@ if (isset($id)) {
 
     $pdo = db();
 
-    $query = "SELECT id, rut_autor, pub_date, titulo, resumen, topico, dev_env, estado
+    $query = "SELECT id, rut_autor, pub_date, titulo, resumen, topico, dev_env, estado, DATEDIFF(CURDATE(), pub_date) as dias_abierto 
               FROM solicitud_func WHERE id = :id;";
 
     $statement = $pdo->prepare($query);
@@ -82,7 +82,7 @@ $estados = [
                 <div>
                     <h1 class="h3 mb-0"><?= $isView ? 'Solicitud de Funcionalidad' : 'Nueva Solicitud de Funcionalidad' ?></h1>
                     <small class="text-muted">
-                        <?= $isView ? "Edición de la solicitud #{$id} - Fecha de publicación: {$solicitud_obtenida['pub_date']}." : 'Completa el formulario para crear una nueva solicitud' ?>
+                        <?= $isView ? "Edición de la solicitud #{$id} - Fecha de publicación: {$solicitud_obtenida['pub_date']}. <b>Dias abierto: {$solicitud_obtenida["dias_abierto"]}</b>" : 'Completa el formulario para crear una nueva solicitud' ?>
                     </small>
                 </div>
                 <a href="func_solis.php" class="btn btn-outline-secondary">← Volver</a>

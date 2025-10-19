@@ -14,7 +14,7 @@ if (isset($id)) {
 
     $pdo = db();
 
-    $query = "SELECT id, rut_autor, pub_date, titulo, descripcion, topico, estado FROM solicitud_error WHERE id = :id;";
+    $query = "SELECT id, rut_autor, pub_date, titulo, descripcion, topico, estado, DATEDIFF(CURDATE(), pub_date) as dias_abierto FROM solicitud_error WHERE id = :id;";
 
     $statement = $pdo->prepare($query);
     $statement->bindParam(":id", $id);
@@ -78,7 +78,7 @@ $estados = [
                 <div>
                     <h1 class="h3 mb-0"><?= $isView ? 'Solicitud de Error' : 'Nueva Solicitud de Error' ?></h1>
                     <small class="text-muted">
-                        <?= $isView ? "Edición de la solicitud #{$id} - Fecha de publicación: {$solicitud_obtenida['pub_date']}." : 'Completa el formulario para crear una nueva solicitud' ?>
+                        <?= $isView ? "Edición de la solicitud #{$id} - Fecha de publicación: {$solicitud_obtenida['pub_date']}. <b>Dias abierto: {$solicitud_obtenida["dias_abierto"]}</b>" : 'Completa el formulario para crear una nueva solicitud' ?>
                     </small>
                 </div>
                 <a href="/main.php" class="btn btn-outline-secondary">← Volver</a>
