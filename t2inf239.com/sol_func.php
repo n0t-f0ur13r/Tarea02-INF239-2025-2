@@ -227,9 +227,11 @@ $estados = [
 
                         <div class="d-flex gap-2 mt-4">
                             <button type="submit" class="btn btn-success">Guardar cambios</button>
-                            <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offCanvasResenas" aria-controls="offcanvasWithBothOptions">Ver reseñas</button>
-                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalResena">Nueva Reseña</button>
-                            <a href="func_solis.php" class="btn btn-outline-secondary">Cancelar</a>
+                            <?php if(auth_role() == 'ingeniero'): ?>
+                                <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offCanvasResenas" aria-controls="offcanvasWithBothOptions">Ver reseñas</button>
+                                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalResena">Nueva Reseña</button>
+                            <?php endif; ?>
+                            <a href="/main.php" class="btn btn-outline-secondary">Cancelar</a>
                         </div>
                     </form>
                 </div>
@@ -251,7 +253,7 @@ $estados = [
         <?php endif; ?>
     </main>
 
-    <?php if ($isView): ?>
+    <?php if ($isView && auth_role()=='ingeniero'): ?>
         <div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offCanvasResenas" aria-labelledby="offcanvasWithBothOptionsLabel">
             <div class="offcanvas-header">
                 <h5 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">
@@ -283,7 +285,7 @@ $estados = [
 
                 <?php else: ?>
                     No hay reseñas registradas.
-                <?php endif ?>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -299,7 +301,7 @@ $estados = [
                     <div class="modal-body">
                         <form id="formResena" method="post" action="/internal/review_create.php">
                             <input type="hidden" name="type" value="func">
-                            <input type="hidden" name="target" value="<?=$id?>">
+                            <input type="hidden" name="target" value="<?= $id ?>">
                             <div class="mb-3">
                                 <label for="mensaje" class="form-label">Mensaje de la reseña</label>
                                 <textarea class="form-control" id="mensaje" name="mensaje" maxlength="400" rows="4" placeholder="Escribe tu reseña aquí..." required></textarea>
