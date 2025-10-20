@@ -142,8 +142,8 @@ random.seed(239)
 
 N_USUARIOS = 120
 N_INGENIEROS = 35
-N_FUNC = 140
-N_ERR = 130
+N_FUNC = 100
+N_ERR = 100
 RESEÑAS_POR_FUNC = (1, 3)  # min, max
 RESEÑAS_POR_ERR = (1, 2)
 

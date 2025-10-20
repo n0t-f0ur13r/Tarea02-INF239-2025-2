@@ -365,9 +365,14 @@ require_login();
                                         ?>
                                         <small class="text-muted"><b>Tópico:</b> <?= htmlspecialchars($se['topico'])?> · <b>Estado:</b> <span class="badge <?= $badge ?>"><?=htmlspecialchars($estado)?></span> · <?= htmlspecialchars($se['pub_date'])?></small>
                                     </div>
-                                    <div class="d-flex gap-2">
-                                        <a href="sol_error.php?id=<?= (int)$se['id'] ?>" class="btn btn-sm btn-outline-primary">Ver</a>
-                                    </div>
+                                        <div class="d-flex gap-2">
+                                            <a href="sol_error.php?id=<?= (int)$se['id'] ?>" class="btn btn-sm btn-outline-primary">Ver</a>
+                                            <button class="btn btn-sm btn-primary" type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#rev-err-<?= (int)$se['id'] ?>">
+                                                Reseñar
+                                            </button>
+                                        </div>
                                 </li>
                                 <li class="list-group-item collapse" id="rev-err-<?= (int)$se['id'] ?>">
                                     <form action="/internal/review_create.php" method="post">
@@ -401,6 +406,11 @@ require_login();
                                     </div>
                                     <div class="d-flex gap-2">
                                         <a href="sol_func.php?id=<?= (int)$sf['id'] ?>" class="btn btn-sm btn-outline-primary">Ver</a>
+                                        <button class="btn btn-sm btn-primary" type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#rev-func-<?= (int)$sf['id'] ?>">
+                                            Reseñar
+                                        </button>
                                     </div>
                                 </li>
                                 <li class="list-group-item collapse" id="rev-func-<?= (int)$sf['id'] ?>">
