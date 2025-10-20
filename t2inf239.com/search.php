@@ -122,7 +122,7 @@ require_login();
                                 . "FROM solicitud_error "
                                 . "WHERE titulo LIKE :titulo ";
                         if (filter_input(INPUT_SERVER, "REQUEST_METHOD") == "GET" && isset($title)){
-                            
+
                             // Obtener solicitudes de funcionalidad primero
                             try {
                                 if($title == ""){
@@ -200,6 +200,9 @@ require_login();
                                 $statement_func->execute();
 
                                 $func_results = $statement_func->fetchAll(PDO::FETCH_ASSOC);
+
+                                $statement_func->closeCursor();
+
                             } catch (PDOException $e) {
                                 echo "Error solicitudes de funcionalidad: " . $e->getMessage();
                                 unset($pdo);

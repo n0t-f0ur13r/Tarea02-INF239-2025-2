@@ -55,10 +55,11 @@ if (!defined('AUTH_INC_PHP')) {
         }
     }
 
-    function require_role(string $role, string $redirectIfNot = '/main.php?e=forbidden'): void {
+    function require_role(string $role, string $redirectIfNot = '/main.php'): void {
         require_login();
         if (auth_role() !== $role) {
             header('Location: ' . $redirectIfNot);
+            flash_warning("Usted no puede realizar tal acción.");
             exit;
         }
     }

@@ -3,7 +3,6 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/dbh.inc.php';
 
-require_login();
 
 if (filter_input(INPUT_SERVER, "REQUEST_METHOD") != "post") {
     if (empty($_SESSION['user'])) {
@@ -12,6 +11,10 @@ if (filter_input(INPUT_SERVER, "REQUEST_METHOD") != "post") {
         header("Location: /main.php");
     }
 }
+
+
+require_login();
+require_role("usuario");
 
 
 $titulo = filter_input(INPUT_POST, "titulo", FILTER_SANITIZE_STRING);
@@ -68,10 +71,9 @@ try {
         $pdo->rollBack();
     }
 
-    [$sqlstate, $errno, $driver_message] = $e->errorInfo();
 
     require_once __DIR__ . "/../includes/pdoErrorInfoSnippet.php";
-    checkPDOErrorInfo($e);
+    checkPDOErrorInfo($pdo);
 
     error_log('PDOException - ' . $e->getMessage(), 0);
 

@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/dbh.inc.php';
 
-require_login();
 
 if (filter_input(INPUT_SERVER, "REQUEST_METHOD") !== "POST") {
     if (empty($_SESSION['user'])) {
@@ -12,6 +11,9 @@ if (filter_input(INPUT_SERVER, "REQUEST_METHOD") !== "POST") {
     }
     exit;
 }
+
+require_login();
+require_role("usuario");
 
 $titulo   = filter_input(INPUT_POST, "titulo", FILTER_SANITIZE_STRING);
 $resumen  = filter_input(INPUT_POST, "resumen", FILTER_SANITIZE_STRING);
@@ -64,6 +66,8 @@ $rut      = $_SESSION['user']['rut'];
 $pub_date = date('Y-m-d');
 $estado   = "Abierto";
 
+error_log("VALOR DEL RUT: {$rut}");
+
 try {
     $pdo = db();
     $pdo->beginTransaction();
@@ -90,10 +94,10 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    if (file_exists(__DIR__ . "/../includes/pdoErrorInfoSnippet.php")) {
-        require_once __DIR__ . "/../includes/pdoErrorInfoSnippet.php";
-        checkPDOErrorInfo($e);
-    }
+
+    require_once __DIR__ . "/../includes/pdoErrorInfoSnippet.php";
+    checkPDOErrorInfo($pdo);
+
     error_log('PDOException - ' . $e->getMessage(), 0);
     flash_danger("Error fatal interno, la solicitud no pudo ser creada.");
     header("Location: /main.php");

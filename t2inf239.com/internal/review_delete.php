@@ -2,10 +2,10 @@
 /**
  * Elimina una reseña existente.
  * Requiere:
- *   POST: csrf, type ('func'|'err'), review_id (id reseña)
+ *   POST: csrf, type ('func'|'error'), review_id (id reseña)
  * Seguridad:
  *   - Rol ingeniero
- *   - El ingeniero debe estar asignado a la solicitud a la que pertenece la reseña.
+ *   - (Sin autor): NO se valida autoría; sólo que el ingeniero esté asignado a la solicitud a la que pertenece la reseña.
  */
 declare(strict_types=1);
 
@@ -13,42 +13,25 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/dbh.inc.php';
 
 require_login();
+require_role('ingeniero');
 
-function redirect_back(): void {
-    $to = $_SERVER['HTTP_REFERER'] ?? '/main.php';
-    header('Location: ' . $to);
+$type = (string)($_POST['type'] ?? '');
+$rid  = (int)   ($_POST['review_id'] ?? 0);
+
+if (!in_array($type, ['func', 'error'], true) || $rid <= 0) {
+    flash_danger('Parámetros inválidos.');
+    header('Location: /main.php');
     exit;
 }
 
-if (auth_role() !== 'ingeniero') {
-    http_response_code(403);
-    flash_danger('Acceso denegado.');
-    redirect_back();
-}
-
-if (!csrf_check($_POST['csrf'] ?? null)) {
-    http_response_code(400);
-    flash_danger('CSRF inválido.');
-    redirect_back();
-}
-
-$type   = ($_POST['type'] ?? '');
-$rid    = (int)($_POST['review_id'] ?? 0);
-
-if (!in_array($type, ['func','err'], true) || $rid <= 0) {
-    http_response_code(400);
-    flash_danger('Parámetros inválidos.');
-    redirect_back();
-}
-
-$pdo = db();
-$pdo->beginTransaction();
-
 try {
+    $pdo = db();
+    $pdo->beginTransaction();
+
     $rut = auth_id();
 
     if ($type === 'func') {
-        // Verifica que la reseña pertenece a una solicitud asignada al ingeniero
+        // Verificar que la reseña exista y que el ingeniero esté ASIGNADO a la solicitud
         $st = $pdo->prepare("
             SELECT rf.id
             FROM resena_func rf
@@ -58,16 +41,26 @@ try {
             WHERE rf.id = :rid
             LIMIT 1
         ");
-        $st->execute([':rut'=>$rut, ':rid'=>$rid]);
-        if (!$st->fetchColumn()) {
-            throw new RuntimeException('Reseña no encontrada o sin permisos (Func).');
+        $st->bindParam(':rut', $rut, PDO::PARAM_STR);
+        $st->bindParam(':rid', $rid, PDO::PARAM_INT);
+        $st->execute();
+        $exists = (bool)$st->fetchColumn();
+        $st->closeCursor();
+
+        if (!$exists) {
+            $pdo->rollBack();
+            flash_danger('Reseña no encontrada o sin permisos (Func).');
+            header('Location: /main.php');
+            exit;
         }
 
         $del = $pdo->prepare("DELETE FROM resena_func WHERE id = :rid");
-        $del->execute([':rid'=>$rid]);
+        $del->bindParam(':rid', $rid, PDO::PARAM_INT);
+        $del->execute();
+        $del->closeCursor();
 
     } else {
-        // Verifica que la reseña pertenece a una solicitud asignada al ingeniero
+        // Verificar que la reseña exista y que el ingeniero esté ASIGNADO a la solicitud
         $st = $pdo->prepare("
             SELECT re.id
             FROM resena_error re
@@ -77,22 +70,36 @@ try {
             WHERE re.id = :rid
             LIMIT 1
         ");
-        $st->execute([':rut'=>$rut, ':rid'=>$rid]);
-        if (!$st->fetchColumn()) {
-            throw new RuntimeException('Reseña no encontrada o sin permisos (Error).');
+        $st->bindParam(':rut', $rut, PDO::PARAM_STR);
+        $st->bindParam(':rid', $rid, PDO::PARAM_INT);
+        $st->execute();
+        $exists = (bool)$st->fetchColumn();
+        $st->closeCursor();
+
+        if (!$exists) {
+            $pdo->rollBack();
+            flash_danger('Reseña no encontrada o sin permisos (Error).');
+            header('Location: /main.php');
+            exit;
         }
 
         $del = $pdo->prepare("DELETE FROM resena_error WHERE id = :rid");
-        $del->execute([':rid'=>$rid]);
+        $del->bindParam(':rid', $rid, PDO::PARAM_INT);
+        $del->execute();
+        $del->closeCursor();
     }
 
     $pdo->commit();
     flash_success('Reseña eliminada correctamente.');
-    redirect_back();
+    header('Location: /main.php');
+    exit;
 
-} catch (Throwable $e) {
-    if ($pdo->inTransaction()) $pdo->rollBack();
-    http_response_code(400);
-    flash_danger('No se pudo eliminar la reseña: ' . $e->getMessage());
-    redirect_back();
+} catch (PDOException $e) {
+    if (isset($pdo) && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    flash_danger('Error interno, no se pudo eliminar la reseña.');
+    error_log('PDOException (delete review): ' . $e->getMessage());
+    header('Location: /main.php');
+    exit;
 }

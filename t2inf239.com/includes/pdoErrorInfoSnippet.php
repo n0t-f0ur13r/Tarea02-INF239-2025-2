@@ -1,8 +1,8 @@
 <?php
 
-function checkPDOErrorInfo(PDOException $e) {
-    if (!empty($e)) {
-        [$sqlstate, $errno, $driver_message] = $e->errorInfo();
+function checkPDOErrorInfo(PDO $pdo) {
+    if (!empty($pdo)) {
+        [$sqlstate, $errno, $driver_message] = $pdo->errorInfo();
 
         if ($sqlstate === '22001' || $errno === 1406) {
             flash_danger("Uno o mas campos exceden su tamaño (titulo o descripción).");
