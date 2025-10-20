@@ -63,7 +63,7 @@ LAST_NAMES = [
 ]
 DOMAINS = ["empresa.cl","servicios.cl","startup.cl","institucion.cl","colegio.cl","gmail.com","outlook.com"]
 
-TOPICOS = ["Autenticación","Onboarding","Reportes","Notificaciones","Pagos","UI/UX","Búsqueda","Sincronización","Seguridad","Auditoría","Backend","Frontend","DevOps","Mobile","Datos"]
+TOPICOS = ["Backend","Frontend","Mobile","QA","DevOps","Data","IoT","Seguridad","Soporte","Arquitectura"]
 ESPECIALIDADES = ["Backend","Frontend","Mobile","QA","DevOps","Data","IoT","Seguridad","Soporte","Arquitectura"]
 ESTADOS = ["Abierto","En Progreso","Resuelto","Cerrado"]  # solicitud_* enum
 COMMON_HASH = "$2y$10$R9PVHwvPCQc2muEJliQdCuCVg2snge3t5UHbJkPDjmGksAfzDmVom"

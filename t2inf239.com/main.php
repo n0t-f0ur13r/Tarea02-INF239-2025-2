@@ -76,20 +76,41 @@ require_login();
             $asignadas_func = $qAsignFunc->fetchAll() ?: [];
         }
 
-        /* Listas del sistema (completas) */
-        $base_query_error = "CALL sp_solicitudes_error_sistema()";
-        $statement = $pdo->prepare($base_query_error);
-        $statement->execute();
-        $solicitudes_error_ing = $statement->fetchAll();
-        
-        $statement->closeCursor();
+            /* Listas del sistema (completas) — usa VIEW si existe; si falla, cae a SP existentes */
+            try {
+                // Funcionalidades desde VIEW
+                $stf = $pdo->prepare("
+                    SELECT id, titulo, resumen, pub_date, topico, dev_env, estado, autor
+                    FROM v_solicitudes_func_sistema
+                    ORDER BY pub_date DESC
+                ");
+                $stf->execute();
+                $solicitudes_func_ing = $stf->fetchAll(PDO::FETCH_ASSOC);
+                $stf->closeCursor();
+            
+                // Errores desde VIEW
+                $ste = $pdo->prepare("
+                    SELECT id, titulo, descripcion, pub_date, topico, estado, autor
+                    FROM v_solicitudes_error_sistema
+                    ORDER BY pub_date DESC
+                ");
+                $ste->execute();
+                $solicitudes_error_ing = $ste->fetchAll(PDO::FETCH_ASSOC);
+                $ste->closeCursor();
+            
+            } catch (Throwable $e) {
+                // Fallback a los SP que ya tienes
+                $stmtErr = $pdo->prepare("CALL sp_solicitudes_error_sistema()");
+                $stmtErr->execute();
+                $solicitudes_error_ing = $stmtErr->fetchAll(PDO::FETCH_ASSOC);
+                $stmtErr->closeCursor();
+            
+                $stmtFunc = $pdo->prepare("CALL sp_solicitudes_funcionalidad_sistema()");
+                $stmtFunc->execute();
+                $solicitudes_func_ing = $stmtFunc->fetchAll(PDO::FETCH_ASSOC);
+                $stmtFunc->closeCursor();
+            }
 
-        $base_query_func = "CALL sp_solicitudes_funcionalidad_sistema()";
-        $stf = $pdo->prepare($base_query_func);
-        $stf->execute();
-        $solicitudes_func_ing = $stf->fetchAll();
-        
-        $statement->closeCursor();
         ?>
         
         <main class="container py-4">

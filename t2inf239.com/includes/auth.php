@@ -19,7 +19,6 @@ if (!defined('AUTH_INC_PHP')) {
 
     // === Sesión con parámetros básicos seguros ===
     if (session_status() !== PHP_SESSION_ACTIVE) {
-        // Ajustes razonables; adapta secure/httponly según tu entorno (HTTPS recomendado)
         session_set_cookie_params([
             'lifetime' => 0,
             'path' => '/',
@@ -28,6 +27,15 @@ if (!defined('AUTH_INC_PHP')) {
             'samesite' => 'Lax',
         ]);
         session_start();
+    }
+
+    // ---- Normalizador simple de RUT (sin puntos, con guión) ----
+    function rut_canon(?string $rut): string {
+        $v = strtoupper(trim((string)$rut));
+        $v = preg_replace('/[^0-9K]/', '', $v);        // sólo dígitos y K
+        if ($v === '') return '';
+        if (strlen($v) === 1) return $v;               // caso borde
+        return substr($v, 0, -1) . '-' . substr($v, -1);
     }
 
     // ===== Helpers de estado de autenticación =====
@@ -78,13 +86,12 @@ if (!defined('AUTH_INC_PHP')) {
      * @param array $user Estructura mínima: ['rut'=>..., 'name'=>..., 'email'=>..., 'role'=>...]
      */
     function login(array $user): void {
-        // Regenera ID para mitigar session fixation
         session_regenerate_id(true);
         $_SESSION['user'] = [
-            'rut' => (string) ($user['rut'] ?? ''),
-            'name' => (string) ($user['name'] ?? ''),
+            'rut'   => rut_canon($user['rut'] ?? ''),
+            'name'  => (string) ($user['name'] ?? ''),
             'email' => (string) ($user['email'] ?? ''),
-            'role' => (string) ($user['role'] ?? 'user'),
+            'role'  => (string) ($user['role'] ?? 'user'),
         ];
     }
 
@@ -101,36 +108,17 @@ if (!defined('AUTH_INC_PHP')) {
 
     // ===== Flash messages muy simples (opcional) =====
     function flash(string $type, string $message): void {
-        // 1. Asegurarse de que la sesión esté iniciada
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-
-        // 2. Crear el array con el formato correcto
-        $flashMessage = [
-            'type' => $type,
-            'msg' => $message
-        ];
-
-        // 3. Añadirlo al array de sesión (apilarlo)
+        $flashMessage = ['type' => $type, 'msg' => $message];
         $_SESSION['flash'][] = $flashMessage;
     }
 
-    function flash_success(string $message): void {
-        flash('success', $message);
-    }
-
-    function flash_danger(string $message): void {
-        flash('danger', $message);
-    }
-
-    function flash_warning(string $message): void {
-        flash('warning', $message);
-    }
-
-    function flash_info(string $message): void {
-        flash('info', $message);
-    }
+    function flash_success(string $message): void { flash('success', $message); }
+    function flash_danger(string $message): void  { flash('danger', $message); }
+    function flash_warning(string $message): void { flash('warning', $message); }
+    function flash_info(string $message): void    { flash('info', $message); }
 
     // ===== CSRF mínimo (opcional pero recomendado) =====
     function csrf_token(): string {

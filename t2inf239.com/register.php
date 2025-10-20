@@ -23,8 +23,18 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label" for="rut">RUT</label>
-                                        <input class="form-control" id="rut" name="rut" placeholder="12.345.678-9" required>
-                                        <div class="invalid-feedback">RUT requerido.</div>
+                                        <input
+                                            class="form-control"
+                                            id="rut"
+                                            name="rut"
+                                            placeholder="12345678-9"
+                                            inputmode="numeric"
+                                            autocomplete="off"
+                                            pattern="^\d{7,8}-[\dkK]$"
+                                            title="Formato: 12345678-5"
+                                            required
+                                        >
+                                        <div class="invalid-feedback">RUT inválido (ej: 12345678-5).</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label" for="role">Rol</label>
@@ -62,6 +72,27 @@
         <?php require_once __DIR__ . '/assets/toasts.php'; ?>
 
         <script>
+            (function(){
+              const $rut = document.getElementById('rut');
+              if(!$rut) return;
+              function norm(v){
+                return (v || '').replace(/[^0-9kK]/g,'').toUpperCase();
+              }
+              function fmt(v){
+                v = norm(v);
+                if(v.length <= 1) return v;
+                const dv = v.slice(-1);
+                const cuerpo = v.slice(0, -1);
+                return cuerpo + '-' + dv;
+              }
+              $rut.addEventListener('input', e => {
+                e.target.value = fmt(e.target.value);
+              });
+              $rut.addEventListener('blur', e => {
+                e.target.value = fmt(e.target.value);
+              });
+            })();
+
             (() => {
                 const f = document.querySelector('form');
                 f.addEventListener('submit', e => {

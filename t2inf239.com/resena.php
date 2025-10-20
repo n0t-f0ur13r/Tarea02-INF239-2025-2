@@ -1,6 +1,4 @@
 <?php
-// sol_error.php — Frontend estático con 2 formularios (create vs update/delete), sin JS.
-// Requiere Bootstrap cargado en assets/head.php y navbar en assets/navbar.php.
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/dbh.inc.php';
