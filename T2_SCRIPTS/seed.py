@@ -14,6 +14,20 @@ Requisitos:
 Credenciales:
     user: t2inf239
     pass: t2inf239password%%
+
+NOTA IMPORTANTE:
+Para que este script funcione con múltiples especialidades por ingeniero,
+la Clave Primaria (PK) de tu tabla 'especialidad' DEBE ser una
+clave compuesta por (ing_rut, campo).
+
+Si la PK es solo (ing_rut), fallará por violación de PK.
+Ejemplo SQL:
+CREATE TABLE especialidad (
+    ing_rut VARCHAR(10) NOT NULL,
+    campo VARCHAR(50) NOT NULL,
+    PRIMARY KEY (ing_rut, campo),  <-- ASÍ DEBE SER
+    FOREIGN KEY (ing_rut) REFERENCES ingenieros(rut)
+);
 """
 import random
 import string
@@ -136,15 +150,39 @@ RESEÑAS_POR_ERR = (1, 2)
 usuarios = make_people(N_USUARIOS, seed_offset=1_000)
 ingenieros = make_people(N_INGENIEROS, seed_offset=50_000)
 
-# Asignar especialidad para cada ingeniero
-especialidad_rows = [(r, random.choice(ESPECIALIDADES)) for (r, _, __, ___) in ingenieros]
+# ------------------------- INICIO DE LA MODIFICACIÓN -------------------------
+# Asignar especialidad para cada ingeniero (asegurando un mínimo de 2)
+especialidad_rows = []
+n_especialidades_disponibles = len(ESPECIALIDADES)
+
+for (rut_ing, _, __, ___) in ingenieros:
+    # 1. Definir cuántas especialidades tendrá este ingeniero (entre 2 y N).
+    #    Para este ejemplo, asignaremos entre 2 y 4.
+    #    Nos aseguramos de no pedir más especialidades de las que existen.
+    max_a_asignar = min(4, n_especialidades_disponibles) 
+    
+    # Aseguramos que el mínimo (2) no sea mayor que el máximo a asignar
+    # (En este caso 2 < 4, pero es buena práctica)
+    if max_a_asignar < 2:
+        k = max_a_asignar # Si tuviéramos < 2 especialidades totales
+    else:
+        k = random.randint(2, max_a_asignar)
+    
+    # 2. Seleccionar k especialidades únicas de la lista
+    especialidades_asignadas = random.sample(ESPECIALIDADES, k=k)
+    
+    # 3. Añadir las filas (rut, especialidad) a la lista de inserción
+    for esp in especialidades_asignadas:
+        especialidad_rows.append((rut_ing, esp))
+# ------------------------- FIN DE LA MODIFICACIÓN -------------------------
+
 
 # ------------------------- Conexión -------------------------
 conn = mysql.connector.connect(**DB)
 cur = conn.cursor()
 
 # ------------------------- Inserciones base (usuarios/ingenieros/especialidad) -------------------------
-# usuarios(rut PK, nombre, email UNIQUE, hash)  ← según tu diccionario de datos
+# usuarios(rut PK, nombre, email UNIQUE, hash)
 cur.executemany(
     "INSERT IGNORE INTO usuarios (rut, nombre, email, hash) VALUES (%s, %s, %s, %s)",
     usuarios
@@ -156,7 +194,7 @@ cur.executemany(
     ingenieros
 )
 
-# especialidad(ing_rut PK -> ingenieros.rut, campo)
+# especialidad(ing_rut PK, campo PK) <-- PK debe ser compuesta!
 cur.executemany(
     "INSERT IGNORE INTO especialidad (ing_rut, campo) VALUES (%s, %s)",
     especialidad_rows
@@ -302,7 +340,7 @@ conn.commit()
 print("✅ Carga masiva completada.")
 print(f"Usuarios insertados/ignorados: {len(usuarios)}")
 print(f"Ingenieros insertados/ignorados: {len(ingenieros)}")
-print(f"Especialidades insertadas/ignoradas: {len(especialidad_rows)}")
+print(f"Especialidades insertadas/ignoradas: {len(especialidad_rows)} (Múltiples por ing.)")
 print(f"Solicitudes FUNC creadas: {len(func_ids)}")
 print(f"Solicitudes ERR creadas: {len(err_ids)}")
 print(f"Asociaciones isf: {len(isf_rows)}  |  ise: {len(ise_rows)}")
@@ -311,4 +349,3 @@ print(f"Reseñas func: {len(rf_rows)}  |  reseñas err: {len(re_rows)}")
 # ------------------------- Limpieza -------------------------
 cur.close()
 conn.close()
-
